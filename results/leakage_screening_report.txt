@@ -1,0 +1,16 @@
+======================================================================
+DATA LEAKAGE SCREENING REPORT
+======================================================================
+Feature: URLSimilarityIndex
+  - Legitimate class: mean=100.0000, std=0.0000 (100% of samples are exactly 100.0)
+  - Phishing class: mean=49.6170, std=22.5720 (range: 0.16 - 100.00)
+  - Single-feature threshold decision rule accuracy: 99.67%
+  - Evidence: Tautological target leakage. Legitimate URLs were measured against a legitimate URL database.
+  - Decision: DROPPED.
+
+Feature: TLDLegitimateProb
+  - Unique TLDs evaluated: 695
+  - Max unique probability values per TLD: 1
+  - Evidence: Exactly constant (zero variance) for every row sharing the same TLD across all 695 TLDs.
+  - Root cause: Target-encoded prior calculated across the entire dataset before train-test split.
+  - Decision: DROPPED.

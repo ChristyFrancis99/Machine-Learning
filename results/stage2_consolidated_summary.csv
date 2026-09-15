@@ -1,0 +1,6 @@
+Experimental_Evaluation,Accuracy,F1_Score,ROC_AUC,Scope_and_Notes
+"Stage 1 Baseline: Proposed ANN (Single 80/20 Split, 30 MI Features)",99.966%,99.960%,0.999996,"Full feature space (lexical + HTML/DOM), single split"
+"Part A: 5-Fold Stratified CV (Proposed ANN, Mean ± Std)",99.975% ± 0.0056%,99.971% ± 0.0066%,0.999997 ± 0.000002,"Full feature space, fresh per-fold scaling & MI selection"
+Part B1: Cross-Dataset Common Features (PhiUSIIL Test Split),93.197%,92.154%,0.981094,8 common alignable features evaluated in-dataset
+Part B2: Cross-Dataset External Validation (UCI Dataset),47.445%,62.603%,0.583023,"External generalization on Mohammad et al. (11,055 rows)"
+Part C: URL-Only Scope Ablation (20 Pre-Crawl Features),99.775%,99.737%,0.998680,"Pre-crawl lexical/host features only, zero webpage fetching"

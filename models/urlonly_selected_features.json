@@ -1,0 +1,22 @@
+[
+  "URLLength",
+  "DomainLength",
+  "IsDomainIP",
+  "CharContinuationRate",
+  "URLCharProb",
+  "TLDLength",
+  "NoOfSubDomain",
+  "HasObfuscation",
+  "NoOfObfuscatedChar",
+  "ObfuscationRatio",
+  "NoOfLettersInURL",
+  "LetterRatioInURL",
+  "NoOfDegitsInURL",
+  "DegitRatioInURL",
+  "NoOfEqualsInURL",
+  "NoOfQMarkInURL",
+  "NoOfAmpersandInURL",
+  "NoOfOtherSpecialCharsInURL",
+  "SpacialCharRatioInURL",
+  "IsHTTPS"
+]

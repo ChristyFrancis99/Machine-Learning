@@ -1,0 +1,9 @@
+PhiUSIIL_Feature,UCI_Feature,PhiUSIIL_Original_Definition,UCI_Original_Definition,Harmonized_Encoding
+IsDomainIP,having_IP_Address,"Binary flag (1 = IP address in domain, 0 = No)","Categorical (1 = Legitimate/No IP, -1 = Phishing/IP)","1 = Legitimate (No IP), -1 = Phishing (Has IP)"
+URLLength,URL_Length,Continuous character count of URL string,"Rule-based (1 = <54 chars, 0 = 54-75 chars, -1 = >75 chars)","Discretized via Mohammad et al. thresholds: <54 -> 1, 54-75 -> 0, >75 -> -1"
+NoOfSubDomain,having_Sub_Domain,Integer count of subdomain levels,"Rule-based (1 = No subdomain, 0 = 1 subdomain, -1 = Multi-subdomain)","Discretized: 0 -> 1, 1 -> 0, >=2 -> -1"
+IsHTTPS,SSLfinal_State,"Binary flag (1 = HTTPS, 0 = HTTP)","Categorical (1 = Trusted SSL, 0 = Suspicious, -1 = No SSL/Untrusted)","PhiUSIIL: 1 -> 1, 0 -> -1; UCI preserves original {-1, 0, 1}"
+HasFavicon,Favicon,"Binary flag (1 = Favicon present, 0 = Absent)","Categorical (1 = Same domain, -1 = External/Absent)","PhiUSIIL: 1 -> 1, 0 -> -1; UCI: {-1, 1}"
+NoOfiFrame,Iframe,Integer count of <iframe> tags in DOM,"Categorical (1 = No invisible iframe, -1 = Invisible iframe)","PhiUSIIL: 0 -> 1, >0 -> -1; UCI: {-1, 1}"
+NoOfPopup,popUpWidnow,Integer count of JavaScript popup dialogue boxes,"Categorical (1 = Normal popup/none, -1 = Popup with fields)","PhiUSIIL: 0 -> 1, >0 -> -1; UCI: {-1, 1}"
+NoOfExternalRef / TotalRef,Request_URL,Ratio of external asset references to total document references,"Categorical (1 = <22% ext objects, 0 = 22-61% ext, -1 = >61% ext)","Discretized via Mohammad et al. thresholds: <22% -> 1, 22-61% -> 0, >61% -> -1"

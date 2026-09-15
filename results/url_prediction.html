@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>URL Prediction Result</title>
+<style>
+body { margin: 0; background: #f4f6f5; color: #17212b; font-family: Georgia, serif; }
+main { width: min(820px, calc(100% - 28px)); margin: 0 auto; padding: 42px 0 64px; }
+.kicker { color: #087f8c; font: 700 12px Arial, sans-serif; letter-spacing: 1.5px; text-transform: uppercase; }
+h1 { font-size: clamp(2.2rem, 7vw, 4.4rem); line-height: 1; font-weight: 500; margin: 12px 0; }
+.url { overflow-wrap: anywhere; color: #65727e; }
+.result { background: white; border-top: 8px solid #087f5b; padding: 24px; margin: 26px 0; border: 1px solid #dce3e8; }
+.label { color: #087f5b; font: 700 18px Arial, sans-serif; letter-spacing: 1px; }
+.probability { font: 700 clamp(3rem, 10vw, 6.5rem)/1 Arial, sans-serif; margin: 12px 0; }
+.meter { height: 14px; background: #e6ecea; }
+.meter span { display: block; height: 100%; width: 4.00%; background: #087f5b; }
+section { background: white; border: 1px solid #dce3e8; padding: 20px; margin-top: 18px; }
+h2 { margin-top: 0; font-size: 1.35rem; font-weight: 500; }
+li { margin: 9px 0; line-height: 1.45; }
+table { border-collapse: collapse; width: 100%; font: 13px Arial, sans-serif; }
+td { border-bottom: 1px solid #e4e9eb; padding: 8px; text-align: left; }
+.note { color: #65727e; font: 13px/1.5 Arial, sans-serif; }
+</style></head><body><main>
+<div class="kicker">URL-only phishing detector</div><h1>Prediction result</h1><p class="url">https://www.example.com</p>
+<div class="result"><div class="label">LIKELY LEGITIMATE</div><div class="probability">4.00%</div><div class="meter"><span></span></div><p>Estimated probability that this URL is phishing.</p></div>
+<section><h2>Risk signals</h2><ul><li>The URL uses HTTPS.</li><li>No strong URL-level warning signal was detected.</li></ul><p class="note">This is a transparent URL-structure screening score. It is not the trained ANN probability because the ANN requires the original dataset's engineered features.</p></section>
+<section><h2>Extracted URL features</h2><table><tr><td>URLLength</td><td>23</td></tr><tr><td>DomainLength</td><td>15</td></tr><tr><td>IsDomainIP</td><td>0</td></tr><tr><td>CharContinuationRate</td><td>0.13043478260869565</td></tr><tr><td>URLCharProb</td><td>1.0</td></tr><tr><td>TLDLength</td><td>3</td></tr><tr><td>NoOfSubDomain</td><td>1</td></tr><tr><td>HasObfuscation</td><td>0</td></tr><tr><td>NoOfObfuscatedChar</td><td>0</td></tr><tr><td>ObfuscationRatio</td><td>0.0</td></tr><tr><td>NoOfLettersInURL</td><td>18</td></tr><tr><td>LetterRatioInURL</td><td>0.782608695652174</td></tr><tr><td>NoOfDegitsInURL</td><td>0</td></tr><tr><td>DegitRatioInURL</td><td>0.0</td></tr><tr><td>NoOfEqualsInURL</td><td>0</td></tr><tr><td>NoOfQMarkInURL</td><td>0</td></tr><tr><td>NoOfAmpersandInURL</td><td>0</td></tr><tr><td>NoOfOtherSpecialCharsInURL</td><td>0</td></tr><tr><td>SpacialCharRatioInURL</td><td>0.0</td></tr><tr><td>IsHTTPS</td><td>1</td></tr></table></section>
+<p class="note">This prediction uses URL structure only. It does not visit the website, inspect its HTML, or guarantee safety. Do not open a suspicious URL just to test it.</p>
+</main></body></html>
