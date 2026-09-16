@@ -6,6 +6,24 @@ Open a terminal in the project folder:
 cd "C:\Users\Christy\Desktop\Website\Machine-Learning"
 ```
 
+Start the backend API in one terminal:
+
+```powershell
+python -m pip install -r backend/requirements.txt
+python -m uvicorn backend.app:app --reload --port 8000
+```
+
+Then start the frontend in a second terminal:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend calls `http://127.0.0.1:8000/api/analyze` by default. Copy
+`frontend/.env.example` to `frontend/.env` and change `VITE_API_URL` when the API is hosted elsewhere.
+
 Create and activate a virtual environment:
 
 ```powershell
