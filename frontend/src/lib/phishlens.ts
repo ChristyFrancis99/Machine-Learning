@@ -34,17 +34,32 @@ export async function analyzeUrl(value: string): Promise<ScreeningResult> {
   });
   const body: unknown = await response.json().catch(() => null);
   if (!response.ok) {
-    const detail = typeof body === "object" && body && "detail" in body ? String(body.detail) : "The analysis service could not process this URL.";
+    const detail =
+      typeof body === "object" && body && "detail" in body
+        ? String(body.detail)
+        : "The analysis service could not process this URL.";
     throw new Error(detail);
   }
   return body as ScreeningResult;
 }
 
-const suspiciousTerms = ["login", "verify", "secure", "account", "password", "update", "confirm", "wallet"];
+const suspiciousTerms = [
+  "login",
+  "verify",
+  "secure",
+  "account",
+  "password",
+  "update",
+  "confirm",
+  "wallet",
+];
 
 function isValidIpv4(hostname: string): boolean {
   const parts = hostname.split(".");
-  return parts.length === 4 && parts.every((part) => /^(0|[1-9]\d{0,2})$/.test(part) && Number(part) <= 255);
+  return (
+    parts.length === 4 &&
+    parts.every((part) => /^(0|[1-9]\d{0,2})$/.test(part) && Number(part) <= 255)
+  );
 }
 
 function isNumericIpv4Candidate(hostname: string): boolean {
@@ -54,7 +69,8 @@ function isNumericIpv4Candidate(hostname: string): boolean {
 export function validateUrl(value: string): { valid: boolean; message?: string; url?: URL } {
   const trimmed = value.trim();
   if (!trimmed) return { valid: false, message: "Enter a website URL to continue." };
-  if (trimmed.length > 2048) return { valid: false, message: "The URL is too long to screen safely." };
+  if (trimmed.length > 2048)
+    return { valid: false, message: "The URL is too long to screen safely." };
   if (/\s/.test(trimmed)) return { valid: false, message: "URLs cannot contain spaces." };
   try {
     const url = new URL(trimmed);
@@ -62,10 +78,19 @@ export function validateUrl(value: string): { valid: boolean; message?: string; 
       return { valid: false, message: "Use an http:// or https:// URL." };
     }
     const hostname = url.hostname.toLowerCase();
-    if (!hostname) return { valid: false, message: "Enter a complete hostname, such as example.com." };
+    if (!hostname)
+      return { valid: false, message: "Enter a complete hostname, such as example.com." };
     if (isNumericIpv4Candidate(hostname)) {
       if (!isValidIpv4(hostname)) return { valid: false, message: "Enter a valid IPv4 hostname." };
-    } else if (!hostname.includes(".") || hostname.split(".").some((label) => !label || !/^[a-z0-9-]+$/i.test(label) || label.startsWith("-") || label.endsWith("-"))) {
+    } else if (
+      !hostname.includes(".") ||
+      hostname
+        .split(".")
+        .some(
+          (label) =>
+            !label || !/^[a-z0-9-]+$/i.test(label) || label.startsWith("-") || label.endsWith("-"),
+        )
+    ) {
       return { valid: false, message: "Enter a complete hostname, such as example.com." };
     }
     return { valid: true, url };
@@ -111,33 +136,140 @@ export function analyzeUrlDemo(value: string): ScreeningResult {
   score = Math.min(96, Math.max(2, score));
 
   const signals: UrlSignal[] = [
-    { name: "HTTPS usage", description: isHttps ? "The URL uses an encrypted HTTPS scheme." : "The URL does not use HTTPS.", status: isHttps ? "safe" : "risk" },
-    { name: "IP-address hostname", description: isIp ? "The hostname is a numeric IP address rather than a named domain." : "The URL uses a named domain.", status: isIp ? "risk" : "safe" },
-    { name: "URL length", description: raw.length > 75 ? "The URL is unusually long and may conceal its destination." : "The URL length is within a common range.", status: raw.length > 75 ? "risk" : "neutral" },
-    { name: "Domain structure", description: subdomains >= 2 ? `The hostname contains ${subdomains} subdomain levels.` : "The hostname structure is straightforward.", status: subdomains >= 2 ? "risk" : "safe" },
-    { name: "Encoded characters", description: encodedCount ? `${encodedCount} encoded sequence${encodedCount === 1 ? "" : "s"} may obscure URL text.` : "No encoded character sequences were found.", status: encodedCount ? "risk" : "neutral" },
-    { name: "Digit ratio", description: digitRatio > 0.08 ? "Digits make up an unusual share of the URL." : "The proportion of digits is low.", status: digitRatio > 0.08 ? "risk" : "neutral" },
-    { name: "Query parameters", description: queryCount ? `${queryCount} query parameter${queryCount === 1 ? "" : "s"} may be used for tracking or redirects.` : "No query parameters are present.", status: queryCount >= 2 ? "risk" : "neutral" },
-    { name: "Suspicious wording", description: foundTerms.length ? `Potentially sensitive wording detected: ${foundTerms.join(", ")}.` : "No common login or verification terms were detected.", status: foundTerms.length ? "risk" : "safe" },
+    {
+      name: "HTTPS usage",
+      description: isHttps
+        ? "The URL uses an encrypted HTTPS scheme."
+        : "The URL does not use HTTPS.",
+      status: isHttps ? "safe" : "risk",
+    },
+    {
+      name: "IP-address hostname",
+      description: isIp
+        ? "The hostname is a numeric IP address rather than a named domain."
+        : "The URL uses a named domain.",
+      status: isIp ? "risk" : "safe",
+    },
+    {
+      name: "URL length",
+      description:
+        raw.length > 75
+          ? "The URL is unusually long and may conceal its destination."
+          : "The URL length is within a common range.",
+      status: raw.length > 75 ? "risk" : "neutral",
+    },
+    {
+      name: "Domain structure",
+      description:
+        subdomains >= 2
+          ? `The hostname contains ${subdomains} subdomain levels.`
+          : "The hostname structure is straightforward.",
+      status: subdomains >= 2 ? "risk" : "safe",
+    },
+    {
+      name: "Encoded characters",
+      description: encodedCount
+        ? `${encodedCount} encoded sequence${encodedCount === 1 ? "" : "s"} may obscure URL text.`
+        : "No encoded character sequences were found.",
+      status: encodedCount ? "risk" : "neutral",
+    },
+    {
+      name: "Digit ratio",
+      description:
+        digitRatio > 0.08
+          ? "Digits make up an unusual share of the URL."
+          : "The proportion of digits is low.",
+      status: digitRatio > 0.08 ? "risk" : "neutral",
+    },
+    {
+      name: "Query parameters",
+      description: queryCount
+        ? `${queryCount} query parameter${queryCount === 1 ? "" : "s"} may be used for tracking or redirects.`
+        : "No query parameters are present.",
+      status: queryCount >= 2 ? "risk" : "neutral",
+    },
+    {
+      name: "Suspicious wording",
+      description: foundTerms.length
+        ? `Potentially sensitive wording detected: ${foundTerms.join(", ")}.`
+        : "No common login or verification terms were detected.",
+      status: foundTerms.length ? "risk" : "safe",
+    },
   ];
 
   const features: FeatureRow[] = [
-    { feature: "URLLength", value: raw.length, interpretation: raw.length > 75 ? "Long" : "Normal range" },
-    { feature: "DomainLength", value: hostname.length, interpretation: hostname.length > 30 ? "Long hostname" : "Normal range" },
-    { feature: "IsDomainIP", value: Number(isIp), interpretation: isIp ? "IP host detected" : "Named domain" },
-    { feature: "IsHTTPS", value: Number(isHttps), interpretation: isHttps ? "Encrypted scheme" : "Unencrypted scheme" },
-    { feature: "NoOfSubDomain", value: subdomains, interpretation: subdomains >= 2 ? "Elevated" : "Typical" },
-    { feature: "HasObfuscation", value: Number(encodedCount > 0), interpretation: encodedCount ? "Encoded text found" : "Not detected" },
-    { feature: "NoOfObfuscatedChar", value: encodedCount, interpretation: encodedCount ? "Review encoded text" : "None" },
+    {
+      feature: "URLLength",
+      value: raw.length,
+      interpretation: raw.length > 75 ? "Long" : "Normal range",
+    },
+    {
+      feature: "DomainLength",
+      value: hostname.length,
+      interpretation: hostname.length > 30 ? "Long hostname" : "Normal range",
+    },
+    {
+      feature: "IsDomainIP",
+      value: Number(isIp),
+      interpretation: isIp ? "IP host detected" : "Named domain",
+    },
+    {
+      feature: "IsHTTPS",
+      value: Number(isHttps),
+      interpretation: isHttps ? "Encrypted scheme" : "Unencrypted scheme",
+    },
+    {
+      feature: "NoOfSubDomain",
+      value: subdomains,
+      interpretation: subdomains >= 2 ? "Elevated" : "Typical",
+    },
+    {
+      feature: "HasObfuscation",
+      value: Number(encodedCount > 0),
+      interpretation: encodedCount ? "Encoded text found" : "Not detected",
+    },
+    {
+      feature: "NoOfObfuscatedChar",
+      value: encodedCount,
+      interpretation: encodedCount ? "Review encoded text" : "None",
+    },
     { feature: "NoOfLettersInURL", value: letterCount, interpretation: "Character count" },
-    { feature: "LetterRatioInURL", value: (letterCount / raw.length).toFixed(3), interpretation: "Share of alphabetic characters" },
+    {
+      feature: "LetterRatioInURL",
+      value: (letterCount / raw.length).toFixed(3),
+      interpretation: "Share of alphabetic characters",
+    },
     { feature: "NoOfDegitsInURL", value: digitCount, interpretation: "Numeric character count" },
-    { feature: "DegitRatioInURL", value: digitRatio.toFixed(3), interpretation: digitRatio > 0.08 ? "Elevated" : "Low" },
-    { feature: "NoOfEqualsInURL", value: (raw.match(/=/g) ?? []).length, interpretation: "Assignment separators" },
-    { feature: "NoOfQMarkInURL", value: (raw.match(/\?/g) ?? []).length, interpretation: "Query markers" },
-    { feature: "NoOfAmpersandInURL", value: (raw.match(/&/g) ?? []).length, interpretation: "Parameter separators" },
-    { feature: "NoOfOtherSpecialCharsInURL", value: specialCount, interpretation: "Non-alphanumeric characters" },
-    { feature: "SpacialCharRatioInURL", value: specialRatio.toFixed(3), interpretation: specialRatio > 0.24 ? "Elevated" : "Normal range" },
+    {
+      feature: "DegitRatioInURL",
+      value: digitRatio.toFixed(3),
+      interpretation: digitRatio > 0.08 ? "Elevated" : "Low",
+    },
+    {
+      feature: "NoOfEqualsInURL",
+      value: (raw.match(/=/g) ?? []).length,
+      interpretation: "Assignment separators",
+    },
+    {
+      feature: "NoOfQMarkInURL",
+      value: (raw.match(/\?/g) ?? []).length,
+      interpretation: "Query markers",
+    },
+    {
+      feature: "NoOfAmpersandInURL",
+      value: (raw.match(/&/g) ?? []).length,
+      interpretation: "Parameter separators",
+    },
+    {
+      feature: "NoOfOtherSpecialCharsInURL",
+      value: specialCount,
+      interpretation: "Non-alphanumeric characters",
+    },
+    {
+      feature: "SpacialCharRatioInURL",
+      value: specialRatio.toFixed(3),
+      interpretation: specialRatio > 0.24 ? "Elevated" : "Normal range",
+    },
   ];
 
   return {
@@ -148,7 +280,9 @@ export function analyzeUrlDemo(value: string): ScreeningResult {
     risk: score >= 70 ? "High" : score >= 35 ? "Medium" : "Low",
     signals,
     features,
-    timestamp: new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date()),
+    timestamp: new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(
+      new Date(),
+    ),
   };
 }
 
@@ -164,8 +298,16 @@ export const modelResults = [
 ];
 
 export const featureRanking = [
-  ["LineOfCode", 0.682], ["NoOfExternalRef", 0.641], ["NoOfImage", 0.614],
-  ["NoOfSelfRef", 0.589], ["NoOfJS", 0.562], ["LargestLineLength", 0.538],
-  ["NoOfCSS", 0.511], ["HasSocialNet", 0.487], ["LetterRatioInURL", 0.452],
-  ["HasCopyrightInfo", 0.421], ["HasDescription", 0.397], ["IsHTTPS", 0.368],
+  ["LineOfCode", 0.682],
+  ["NoOfExternalRef", 0.641],
+  ["NoOfImage", 0.614],
+  ["NoOfSelfRef", 0.589],
+  ["NoOfJS", 0.562],
+  ["LargestLineLength", 0.538],
+  ["NoOfCSS", 0.511],
+  ["HasSocialNet", 0.487],
+  ["LetterRatioInURL", 0.452],
+  ["HasCopyrightInfo", 0.421],
+  ["HasDescription", 0.397],
+  ["IsHTTPS", 0.368],
 ] as const;

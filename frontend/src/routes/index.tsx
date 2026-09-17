@@ -10,9 +10,16 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "PhishLens — Phishing Detection Research Dashboard" },
-      { name: "description", content: "Explore URL risk signals and phishing detection research results in the PhishLens dashboard." },
+      {
+        name: "description",
+        content:
+          "Explore URL risk signals and phishing detection research results in the PhishLens dashboard.",
+      },
       { property: "og:title", content: "PhishLens — Phishing Detection Dashboard" },
-      { property: "og:description", content: "URL screening demonstrations and phishing detection research results." },
+      {
+        property: "og:description",
+        content: "URL screening demonstrations and phishing detection research results.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

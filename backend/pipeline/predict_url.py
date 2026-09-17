@@ -28,11 +28,27 @@ def normalized_url(raw_url):
     value = raw_url.strip()
     if not value:
         raise ValueError("URL cannot be empty.")
+    if any(character.isspace() for character in value):
+        raise ValueError("URL cannot contain spaces.")
     if "://" not in value:
         value = "https://" + value
     parsed = urlsplit(value)
-    if not parsed.hostname:
+    if parsed.scheme.lower() not in {"http", "https"}:
+        raise ValueError("URL must use the http:// or https:// scheme.")
+    hostname = parsed.hostname
+    if not hostname:
         raise ValueError("Please enter a valid URL with a domain name.")
+    if not is_ip_address(hostname):
+        labels = hostname.split(".")
+        if (
+            len(labels) < 2
+            or any(
+                not label
+                or not re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?", label)
+                for label in labels
+            )
+        ):
+            raise ValueError("Please enter a valid URL with a domain name.")
     return value, parsed
 
 
