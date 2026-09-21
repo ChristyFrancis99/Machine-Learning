@@ -259,7 +259,9 @@ function Sidebar({
 
 function Topbar({ onMenu }: { onMenu: () => void }) {
   const [dark, setDark] = useState(true);
-  useEffect(() => document.documentElement.classList.toggle("dark", dark), [dark]);
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+  }, [dark]);
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/90 px-4 backdrop-blur-md md:px-7 lg:ml-64">
       <div className="flex items-center gap-3">
@@ -299,6 +301,121 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
       </div>
     </header>
   );
+}
+
+type MeterVariant = "risk" | "safe" | "neutral";
+
+type MeterTone = "risk-low" | "risk-medium" | "risk-high" | "safe-low" | "safe-medium" | "safe-high" | "neutral";
+
+function getMeterTone(value: number, variant: MeterVariant): MeterTone {
+  if (variant === "neutral") return "neutral";
+  if (variant === "risk") {
+    return value < 35 ? "risk-low" : value < 70 ? "risk-medium" : "risk-high";
+  }
+  return value < 35 ? "safe-low" : value < 70 ? "safe-medium" : "safe-high";
+}
+
+function RiskProgressBar({
+  value,
+  label,
+  variant = "neutral",
+  compact = false,
+}: {
+  value: number;
+  label?: string;
+  variant?: MeterVariant;
+  compact?: boolean;
+}) {
+  const normalizedValue = Math.min(100, Math.max(0, Number.isFinite(value) ? value : 0));
+  const tone = getMeterTone(normalizedValue, variant);
+  return (
+    <div className={compact ? "space-y-1" : "space-y-2"}>
+      {label && (
+        <div className="flex items-center justify-between gap-3 text-[11px] text-muted-foreground">
+          <span>{label}</span>
+          <span className="font-mono">{normalizedValue.toFixed(0)}%</span>
+        </div>
+      )}
+      <div
+        className={`risk-meter risk-meter-${tone} ${compact ? "risk-meter-compact" : ""}`}
+        role="progressbar"
+        aria-label={label ?? "Screening value"}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={normalizedValue}
+      >
+        <span style={{ width: `${normalizedValue}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function FeatureMeter({
+  value,
+  variant = "neutral",
+  label,
+}: {
+  value: number;
+  variant?: MeterVariant;
+  label: string;
+}) {
+  return <RiskProgressBar value={value} variant={variant} label={label} compact />;
+}
+
+function RiskScale({ value }: { value: number }) {
+  const normalizedValue = Math.min(100, Math.max(0, value));
+  return (
+    <div className="risk-scale">
+      <div className="risk-scale-labels">
+        <span>Low <small>0-34%</small></span>
+        <span>Medium <small>35-69%</small></span>
+        <span>High <small>70-100%</small></span>
+      </div>
+      <div className="risk-scale-track">
+        <span className="risk-scale-marker" style={{ left: `${normalizedValue}%` }}>
+          <b>{normalizedValue.toFixed(2)}%</b>
+        </span>
+      </div>
+      <div className="risk-scale-axis">
+        <span>0%</span>
+        <span>35%</span>
+        <span>70%</span>
+        <span>100%</span>
+      </div>
+    </div>
+  );
+}
+
+function FeatureCard({
+  label,
+  value,
+  meterValue,
+  interpretation,
+  variant = "neutral",
+}: {
+  label: string;
+  value: string;
+  meterValue: number;
+  interpretation: string;
+  variant?: MeterVariant;
+}) {
+  return (
+    <div className="feature-card">
+      <div className="flex items-start justify-between gap-3">
+        <p className="feature-card-label">{label}</p>
+        <span className={`feature-status feature-status-${variant}`} aria-label={`${variant} status`} />
+      </div>
+      <p className="feature-card-value">{value}</p>
+      <FeatureMeter value={meterValue} variant={variant} label={`${label} indicator`} />
+      <p className="feature-card-note">{interpretation}</p>
+    </div>
+  );
+}
+
+function featureNumber(features: ScreeningResult["features"], name: string): number {
+  const value = features.find((feature) => feature.feature === name)?.value;
+  const number = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(number) ? number : 0;
 }
 
 function UrlAnalyzer() {
@@ -488,6 +605,92 @@ function ResultPanel({
   const dangerous = result.classification === "LIKELY PHISHING";
   const statusIcon = dangerous ? ShieldAlert : ShieldCheck;
   const StatusIcon = statusIcon;
+  const featureValue = (feature: string) =>
+    result.features.find((row) => row.feature === feature)?.value ?? "-";
+  const observedMetrics = [
+    {
+      label: "URL length",
+      value: `${featureValue("URLLength")} chars`,
+      note: "Total URL characters",
+    },
+    {
+      label: "Host length",
+      value: `${featureValue("DomainLength")} chars`,
+      note: "Hostname characters",
+    },
+    {
+      label: "Transport",
+      value: featureValue("IsHTTPS") === 1 ? "HTTPS" : "HTTP",
+      note: "Connection scheme",
+    },
+    {
+      label: "Subdomains",
+      value: featureValue("NoOfSubDomain"),
+      note: "Nested host labels",
+    },
+    {
+      label: "Obfuscation",
+      value: featureValue("HasObfuscation") === 1 ? "Detected" : "None",
+      note: "Encoded URL syntax",
+    },
+    {
+      label: "Query markers",
+      value: featureValue("NoOfQMarkInURL"),
+      note: "Question marks found",
+    },
+  ];
+  const featureInterpretation = (name: string, fallback: string) =>
+    result.features.find((row) => row.feature === name)?.interpretation ?? fallback;
+  const riskBreakdown = [
+    {
+      label: "URL length",
+      value: `${featureValue("URLLength")} chars`,
+      meter: Math.min(100, (featureNumber(result.features, "URLLength") / 150) * 100),
+      variant: featureNumber(result.features, "URLLength") > 75 ? "risk" : "safe",
+      note: featureInterpretation("URLLength", "URL length measurement"),
+    },
+    {
+      label: "Subdomains",
+      value: String(featureValue("NoOfSubDomain")),
+      meter: Math.min(100, (featureNumber(result.features, "NoOfSubDomain") / 5) * 100),
+      variant: featureNumber(result.features, "NoOfSubDomain") >= 2 ? "risk" : "safe",
+      note: featureInterpretation("NoOfSubDomain", "Nested hostname labels"),
+    },
+    {
+      label: "Obfuscation",
+      value: featureNumber(result.features, "HasObfuscation") ? "Detected" : "None",
+      meter: featureNumber(result.features, "HasObfuscation") ? 100 : 0,
+      variant: featureNumber(result.features, "HasObfuscation") ? "risk" : "neutral",
+      note: featureInterpretation("HasObfuscation", "Encoded URL syntax"),
+    },
+    {
+      label: "HTTPS",
+      value: featureNumber(result.features, "IsHTTPS") ? "Enabled" : "Disabled",
+      meter: featureNumber(result.features, "IsHTTPS") ? 100 : 0,
+      variant: featureNumber(result.features, "IsHTTPS") ? "safe" : "risk",
+      note: featureInterpretation("IsHTTPS", "Connection scheme"),
+    },
+    {
+      label: "Query parameters",
+      value: `${featureValue("NoOfQMarkInURL")} marker(s)`,
+      meter: Math.min(100, (featureNumber(result.features, "NoOfQMarkInURL") / 5) * 100),
+      variant: featureNumber(result.features, "NoOfQMarkInURL") > 0 ? "neutral" : "safe",
+      note: featureInterpretation("NoOfQMarkInURL", "Query markers found"),
+    },
+  ] satisfies Array<{
+    label: string;
+    value: string;
+    meter: number;
+    variant: MeterVariant;
+    note: string;
+  }>;
+  const featureMeterValue = (feature: string, value: number) => {
+    if (feature.includes("Ratio")) return Math.min(100, value * 100);
+    if (feature.startsWith("Is") || feature === "HasObfuscation") return value ? 100 : 0;
+    if (feature === "URLLength") return Math.min(100, (value / 150) * 100);
+    if (feature === "DomainLength") return Math.min(100, (value / 80) * 100);
+    return Math.min(100, (Math.abs(value) / 10) * 100);
+  };
   return (
     <div className="mt-5 space-y-5 animate-result">
       <Panel
@@ -522,50 +725,65 @@ function ResultPanel({
             Analyze another URL
           </Button>
         </div>
-        <div className="grid gap-px bg-border md:grid-cols-[1.15fr_.85fr]">
-          <div className="bg-card p-6">
-            <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground">
-              Phishing probability
-            </p>
-            <p
-              className={`mt-2 font-display text-5xl font-semibold ${dangerous ? "text-danger" : "text-safe"}`}
-            >
-              {result.phishing.toFixed(2)}%
-            </p>
-            <div className="mt-6">
-              <div className="mb-2 flex justify-between text-xs text-muted-foreground">
-                <span>Lower risk</span>
-                <span>Higher risk</span>
+        <div className="result-summary-grid">
+          <div className="result-score-card">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="report-eyebrow">Phishing risk</p>
+                <p className={`result-score ${dangerous ? "text-danger" : "text-safe"}`}>
+                  {result.phishing.toFixed(2)}%
+                </p>
               </div>
-              <Progress
-                value={result.phishing}
-                className={dangerous ? "risk-progress" : "safe-progress"}
-              />
+              <ShieldAlert className={dangerous ? "text-danger" : "text-primary"} size={28} />
+            </div>
+            <RiskProgressBar value={result.phishing} label="Risk probability" variant="risk" />
+            <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
+              <span>Lower risk</span><span>Higher risk</span>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-px bg-border">
-            <div className="bg-card p-5">
-              <p className="text-xs text-muted-foreground">Legitimate probability</p>
-              <p className="mt-2 font-display text-2xl font-semibold text-safe">
-                {result.legitimate.toFixed(2)}%
-              </p>
-            </div>
-            <div className="bg-card p-5">
-              <p className="text-xs text-muted-foreground">Risk category</p>
-              <p
-                className={`mt-2 font-display text-2xl font-semibold ${result.risk === "Low" ? "text-safe" : result.risk === "Medium" ? "text-warning" : "text-danger"}`}
-              >
-                {result.risk}
-              </p>
-            </div>
-            <div className="col-span-2 bg-card p-5">
-              <p className="flex items-start gap-2 text-xs leading-5 text-muted-foreground">
-                <Info size={15} className="mt-0.5 shrink-0 text-primary" />
-                This live screening uses URL-structure features. It does not visit the submitted
-                website or claim an ANN probability.
-              </p>
-            </div>
+          <div className="result-probability-card">
+            <p className="report-eyebrow">Legitimate probability</p>
+            <p className="result-secondary-score text-safe">{result.legitimate.toFixed(2)}%</p>
+            <RiskProgressBar value={result.legitimate} label="Legitimate estimate" variant="safe" />
+            <p className="mt-3 text-xs text-muted-foreground">Complementary URL-structure screening estimate.</p>
           </div>
+          <div className="result-probability-card">
+            <p className="report-eyebrow">Risk category</p>
+            <p className={`result-secondary-score ${result.risk === "Low" ? "text-safe" : result.risk === "Medium" ? "text-warning" : "text-danger"}`}>
+              {result.risk}
+            </p>
+            <div className={`risk-category-line risk-category-${result.risk.toLowerCase()}`}>
+              <span /> {result.risk} screening band
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">Thresholds: low &lt; 35%, medium &lt; 70%, high 70%+.</p>
+          </div>
+        </div>
+        <div className="result-scale-section">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="report-eyebrow">Risk score scale</p>
+              <p className="mt-1 text-xs text-muted-foreground">Current position against the screening bands.</p>
+            </div>
+            <span className="font-mono text-xs text-foreground">{result.phishing.toFixed(2)} / 100</span>
+          </div>
+          <RiskScale value={result.phishing} />
+        </div>
+        <div className="result-disclaimer">
+          <Info size={15} className="mt-0.5 shrink-0 text-primary" />
+          <span><strong>URL-structure screening:</strong> this live analysis evaluates URL-level characteristics only. It does not visit the submitted website, inspect webpage content, or claim an ANN probability.</span>
+        </div>
+      </Panel>
+
+      <Panel className="p-5">
+        <div className="mb-4">
+          <p className="report-eyebrow">Observed URL signals</p>
+          <h2 className="mt-2 font-display text-xl font-semibold">Risk breakdown</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Measured characteristics that contribute context to this URL-structure screening result.</p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {riskBreakdown.map((item) => (
+            <FeatureCard key={item.label} label={item.label} value={item.value} meterValue={item.meter} variant={item.variant} interpretation={item.note} />
+          ))}
         </div>
       </Panel>
 
@@ -573,26 +791,33 @@ function ResultPanel({
         <div className="mb-4">
           <h2 className="font-display text-xl font-semibold">Why did we get this result?</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Signals found in the URL text are listed below.
+            Each row shows the URL evidence that influenced the screening estimate and why it matters.
           </p>
         </div>
         <div className="divide-y divide-border">
-          {result.signals.map((signal) => (
+          {result.signals.map((signal, index) => (
             <div
-              key={signal.name}
-              className="grid gap-3 py-3 sm:grid-cols-[1.3fr_2fr_auto] sm:items-center"
+              key={`${signal.name}-${index}`}
+              className="grid gap-3 py-4 sm:grid-cols-[minmax(180px,0.85fr)_minmax(0,2.6fr)_auto] sm:items-center"
             >
-              <div className="flex items-center gap-3">
-                {signal.status === "risk" ? (
-                  <AlertTriangle className="text-danger" size={17} />
-                ) : signal.status === "safe" ? (
-                  <Check className="text-safe" size={17} />
-                ) : (
-                  <Info className="text-muted-foreground" size={17} />
-                )}
-                <span className="text-sm font-medium">{signal.name}</span>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 shrink-0">
+                  {signal.status === "risk" ? (
+                    <AlertTriangle className="text-danger" size={17} />
+                  ) : signal.status === "safe" ? (
+                    <Check className="text-safe" size={17} />
+                  ) : (
+                    <Info className="text-muted-foreground" size={17} />
+                  )}
+                </div>
+                <div>
+                  <span className="text-sm font-medium">{signal.name}</span>
+                  <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                    Observed signal
+                  </p>
+                </div>
               </div>
-              <p className="text-xs leading-5 text-muted-foreground">{signal.description}</p>
+              <p className="text-sm leading-6 text-muted-foreground">{signal.description}</p>
               <span className={`signal-label signal-${signal.status}`}>
                 {signal.status === "risk"
                   ? "Raises risk"
@@ -607,6 +832,68 @@ function ResultPanel({
           <AlertTriangle size={15} className="mt-0.5 shrink-0" />
           These explanations describe URL-level signals. They are not proof that a website is
           malicious or safe.
+        </div>
+      </Panel>
+
+      <Panel className="p-5">
+        <div className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+          <div>
+            <p className="report-eyebrow">Observed URL profile</p>
+            <h2 className="mt-2 font-display text-xl font-semibold">What was measured</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Key URL characteristics extracted without opening or fetching the destination.</p>
+          </div>
+          <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">{result.features.length} measurements</span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          {observedMetrics.map((metric) => {
+            const feature = metric.label === "URL length" ? "URLLength" : metric.label === "Host length" ? "DomainLength" : metric.label === "Transport" ? "IsHTTPS" : metric.label === "Subdomains" ? "NoOfSubDomain" : metric.label === "Obfuscation" ? "HasObfuscation" : "NoOfQMarkInURL";
+            const numericValue = featureNumber(result.features, feature);
+            return (
+              <FeatureCard
+                key={metric.label}
+                label={metric.label}
+                value={metric.value}
+                meterValue={featureMeterValue(feature, numericValue)}
+                variant={feature === "IsHTTPS" ? (numericValue ? "safe" : "risk") : feature === "HasObfuscation" ? (numericValue ? "risk" : "neutral") : "neutral"}
+                interpretation={metric.note}
+              />
+            );
+          })}
+        </div>
+      </Panel>
+
+      <Panel className="p-5">
+        <div className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+          <div>
+            <p className="report-eyebrow">Complete extraction</p>
+            <h2 className="mt-2 font-display text-xl font-semibold">Measurement register</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Every feature returned by the active URL screening pipeline.</p>
+          </div>
+          <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Raw values preserved</span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {result.features.map((row) => {
+            const numericValue = featureNumber(result.features, row.feature);
+            const binary = row.feature.startsWith("Is") || row.feature === "HasObfuscation";
+            const variant: MeterVariant =
+              row.feature === "IsHTTPS"
+                ? numericValue
+                  ? "safe"
+                  : "risk"
+                : binary && numericValue
+                  ? "risk"
+                  : "neutral";
+            return (
+              <FeatureCard
+                key={row.feature}
+                label={row.feature}
+                value={String(row.value)}
+                meterValue={featureMeterValue(row.feature, numericValue)}
+                variant={variant}
+                interpretation={row.interpretation}
+              />
+            );
+          })}
         </div>
       </Panel>
 

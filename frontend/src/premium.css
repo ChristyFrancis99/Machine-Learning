@@ -3,6 +3,15 @@
 :root {
   --pg-glow: oklch(0.7 0.16 252 / 16%);
   --pg-glow-strong: oklch(0.7 0.16 252 / 26%);
+  --color-safe: oklch(0.58 0.16 160);
+  --color-warning: oklch(0.68 0.16 70);
+  --color-danger: oklch(0.62 0.2 25);
+}
+
+.dark {
+  --color-safe: oklch(0.74 0.16 160);
+  --color-warning: oklch(0.78 0.16 70);
+  --color-danger: oklch(0.72 0.18 25);
 }
 
 html,
@@ -87,6 +96,7 @@ header.sticky {
 button {
   -webkit-tap-highlight-color: transparent;
 }
+
 button:not([aria-label="Close navigation"]):not(.nav-item):active {
   transform: translateY(1px);
 }
@@ -100,17 +110,19 @@ button:not([aria-label="Close navigation"]):not(.nav-item):active {
 #url-input:hover {
   border-color: color-mix(in oklch, var(--color-border) 60%, var(--color-primary));
 }
+
 #url-input:focus {
   box-shadow:
     0 0 0 4px oklch(0.7 0.16 252 / 10%),
     inset 0 1px 0 oklch(1 0 0 / 5%);
 }
 
-.animate-result > section:first-child {
+.animate-result>section:first-child {
   position: relative;
   overflow: hidden;
 }
-.animate-result > section:first-child::before {
+
+.animate-result>section:first-child::before {
   content: "";
   position: absolute;
   inset: 0 0 auto;
@@ -124,9 +136,11 @@ table tbody tr {
     background-color 0.18s ease,
     transform 0.18s ease;
 }
+
 table tbody tr:hover {
   background: color-mix(in oklch, var(--color-primary) 5%, transparent);
 }
+
 table thead th {
   white-space: nowrap;
   font-size: 0.68rem;
@@ -144,6 +158,7 @@ table thead th {
   border-radius: 14px;
   min-height: 112px;
 }
+
 .metric:hover {
   transform: translateY(-3px);
 }
@@ -160,17 +175,9 @@ input:focus-visible {
 .badge-neutral {
   backdrop-filter: blur(8px);
 }
+
 .animate-spin-slow {
   filter: drop-shadow(0 0 12px oklch(0.7 0.16 252 / 30%));
-}
-
-/* Keep the product explicitly self-contained: this is a client-side demo. */
-aside > div:last-child > div > p {
-  font-size: 0;
-}
-aside > div:last-child > div > p::after {
-  content: "Client-side demo • no backend required";
-  font-size: 11px;
 }
 
 @media (max-width: 1023px) {
@@ -180,20 +187,25 @@ aside > div:last-child > div > p::after {
 }
 
 @media (max-width: 640px) {
+
   section.border.bg-card,
   .shadow-panel {
     border-radius: 14px;
   }
+
   .metric {
     min-height: 96px;
     padding: 0.85rem;
   }
+
   .example-chip {
     max-width: calc(100vw - 48px);
   }
+
   .font-display.text-3xl {
     font-size: 1.75rem;
   }
+
   table {
     min-width: 620px;
   }
@@ -203,9 +215,281 @@ aside > div:last-child > div > p::after {
   main::before {
     display: none;
   }
+
   section.border.bg-card:hover,
   .metric:hover,
   .nav-item:hover {
     transform: none;
+  }
+}
+
+.result-summary-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) repeat(2, minmax(220px, 0.825fr));
+  gap: 1px;
+  background: var(--color-border);
+}
+
+.result-score-card,
+.result-probability-card,
+.result-scale-section,
+.result-disclaimer {
+  background: var(--color-card);
+  padding: 1.35rem;
+}
+
+.result-score {
+  margin: 0.3rem 0 1rem;
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 7vw, 5.25rem);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.result-secondary-score {
+  margin: 0.65rem 0 1rem;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.report-eyebrow,
+.feature-card-label {
+  color: var(--color-muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.risk-meter {
+  height: 0.55rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklch, var(--color-border) 80%, var(--color-primary));
+  background: color-mix(in oklch, var(--color-background) 86%, var(--color-primary));
+}
+
+.risk-meter span {
+  display: block;
+  height: 100%;
+  background: var(--color-primary);
+  transition: width 0.75s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.risk-meter-compact {
+  height: 0.35rem;
+}
+
+.risk-meter-risk-low span,
+.risk-meter-safe-high span {
+  background: var(--color-safe);
+  box-shadow: 0 0 10px color-mix(in oklch, var(--color-safe) 38%, transparent);
+}
+
+.risk-meter-risk-medium span,
+.risk-meter-safe-medium span {
+  background: var(--color-warning);
+  box-shadow: 0 0 10px color-mix(in oklch, var(--color-warning) 32%, transparent);
+}
+
+.risk-meter-risk-high span {
+  background: var(--color-danger);
+  box-shadow: 0 0 10px color-mix(in oklch, var(--color-danger) 38%, transparent);
+}
+
+.risk-meter-safe-low span {
+  background: var(--color-warning);
+  box-shadow: 0 0 10px color-mix(in oklch, var(--color-warning) 26%, transparent);
+}
+
+.risk-meter-neutral span {
+  background: var(--color-muted-foreground);
+  box-shadow: none;
+}
+
+.risk-category-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.risk-category-line span,
+.feature-status {
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+}
+
+.risk-category-medium span,
+.feature-status-risk {
+  background: var(--color-warning);
+}
+
+.risk-category-high span {
+  background: var(--color-danger);
+}
+
+.risk-category-low span,
+.feature-status-safe {
+  background: var(--color-safe);
+}
+
+.feature-status-neutral {
+  background: var(--color-muted-foreground);
+}
+
+.result-scale-section,
+.result-disclaimer {
+  border-top: 1px solid var(--color-border);
+}
+
+.result-disclaimer {
+  display: flex;
+  gap: 0.6rem;
+  color: var(--color-muted-foreground);
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+
+.result-disclaimer strong {
+  color: var(--color-foreground);
+}
+
+.risk-scale {
+  margin-top: 1.25rem;
+}
+
+.risk-scale-labels,
+.risk-scale-axis {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--color-muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+}
+
+.risk-scale-labels span:nth-child(2) {
+  color: var(--color-warning);
+}
+
+.risk-scale-labels span:nth-child(3) {
+  color: var(--color-danger);
+}
+
+.risk-scale-labels small {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.58rem;
+  text-transform: none;
+}
+
+.risk-scale-track {
+  position: relative;
+  height: 0.55rem;
+  margin: 0.65rem 0 0.45rem;
+  background: linear-gradient(90deg, var(--color-safe) 0 35%, var(--color-warning) 35% 70%, var(--color-danger) 70% 100%);
+}
+
+.risk-scale-marker {
+  position: absolute;
+  top: 50%;
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 2px solid var(--color-background);
+  border-radius: 999px;
+  background: var(--color-foreground);
+  box-shadow: 0 0 0 2px var(--color-primary);
+  transform: translate(-50%, -50%);
+  transition: left 0.75s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.risk-scale-marker b {
+  position: absolute;
+  top: 1.05rem;
+  left: 50%;
+  color: var(--color-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  transform: translateX(-50%);
+}
+
+.risk-scale-axis {
+  margin-top: 1.35rem;
+  font-size: 0.6rem;
+}
+
+.feature-card {
+  min-width: 0;
+  padding: 0.95rem;
+  border: 1px solid var(--color-border);
+  background: color-mix(in oklch, var(--color-card) 92%, var(--color-primary));
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.feature-card:hover {
+  border-color: color-mix(in oklch, var(--color-border) 55%, var(--color-primary));
+  transform: translateY(-2px);
+}
+
+.feature-card-value {
+  margin: 0.55rem 0 0.7rem;
+  overflow-wrap: anywhere;
+  color: var(--color-foreground);
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.feature-card-note {
+  min-height: 2.3rem;
+  margin-top: 0.55rem;
+  color: var(--color-muted-foreground);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  .result-summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .result-score-card {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .result-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .result-score-card {
+    grid-column: auto;
+  }
+
+  .risk-scale-labels {
+    font-size: 0.58rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feature-card:hover {
+    transform: none;
+  }
+
+  .risk-meter span,
+  .risk-scale-marker {
+    transition: none;
   }
 }

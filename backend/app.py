@@ -23,7 +23,14 @@ RESULTS_DIR = BASE_DIR / "results"
 app = FastAPI(title="PhishLens API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:8080",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:8080",
+    ],
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
 )
@@ -36,6 +43,22 @@ class AnalyzeRequest(BaseModel):
 def risk_category(probability: float) -> str:
     percentage = probability * 100
     return "High" if percentage >= 70 else "Medium" if percentage >= 35 else "Low"
+
+
+def signal_name(reason: str) -> str:
+    name_prefixes = (
+        ("The host is the IP address", "Host identity"),
+        ("The URL uses HTTP", "Connection security"),
+        ("The URL uses HTTPS", "Connection security"),
+        ("The URL is ", "URL length"),
+        ("The host contains", "Domain structure"),
+        ("The URL contains obfuscation", "Obfuscation"),
+        ("Digits make up", "Digit density"),
+        ("Uncommon special characters", "Special characters"),
+        ("The URL contains", "Query structure"),
+        ("None of the configured", "Baseline assessment"),
+    )
+    return next((name for prefix, name in name_prefixes if reason.startswith(prefix)), "URL evidence")
 
 
 def feature_interpretation(name: str, value: object) -> str:
@@ -65,9 +88,9 @@ def analyze(payload: AnalyzeRequest) -> dict[str, object]:
     phishing_reasons, legitimate_signals = heuristic_reasons(parsed, features)
     signals = []
     for reason in phishing_reasons:
-        signals.append({"name": "Risk signal", "description": reason, "status": "risk"})
+        signals.append({"name": signal_name(reason), "description": reason, "status": "risk"})
     for reason in legitimate_signals:
-        signals.append({"name": "Legitimate signal", "description": reason, "status": "safe"})
+        signals.append({"name": signal_name(reason), "description": reason, "status": "safe"})
     if not signals:
         signals.append({"name": "URL structure", "description": "No decisive URL-level signal was found.", "status": "neutral"})
 

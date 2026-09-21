@@ -121,25 +121,45 @@ def heuristic_reasons(parsed, feature_values):
     phishing_reasons = []
     legitimate_signals = []
     if feature_values["IsDomainIP"]:
-        phishing_reasons.append("The hostname is an IP address rather than a normal domain.")
+        phishing_reasons.append(
+            f"The host is the IP address {parsed.hostname}. IP-based hosts do not expose a normal registrable domain, which makes the destination identity harder to verify."
+        )
     if feature_values["IsHTTPS"] == 0:
-        phishing_reasons.append("The URL does not use HTTPS.")
+        phishing_reasons.append(
+            "The URL uses HTTP instead of HTTPS. Traffic is not protected by HTTPS, and the connection does not provide the usual certificate-based domain check."
+        )
     else:
-        legitimate_signals.append("The URL uses HTTPS.")
+        legitimate_signals.append(
+            "The URL uses HTTPS. This protects the connection in transit, but HTTPS alone does not prove that the site is legitimate."
+        )
     if feature_values["URLLength"] > 75:
-        phishing_reasons.append("The URL is unusually long.")
+        phishing_reasons.append(
+            f"The URL is {feature_values['URLLength']} characters long, above the 75-character review threshold. Longer URLs can hide suspicious paths, redirects, or tracking data."
+        )
     if feature_values["NoOfSubDomain"] >= 2:
-        phishing_reasons.append("The domain contains multiple subdomain levels.")
+        phishing_reasons.append(
+            f"The host contains {feature_values['NoOfSubDomain']} subdomain level(s). Multiple nested labels can make the visible host harder to read and may imitate a trusted brand."
+        )
     if feature_values["HasObfuscation"]:
-        phishing_reasons.append("The URL contains encoded or obfuscation-like characters.")
+        phishing_reasons.append(
+            f"The URL contains obfuscation-like syntax, including {feature_values['NoOfObfuscatedChar']} encoded character(s) and/or an @ symbol. These patterns can disguise the actual destination or intent."
+        )
     if feature_values["DegitRatioInURL"] > 0.20:
-        phishing_reasons.append("The URL contains an unusually high proportion of digits.")
+        phishing_reasons.append(
+            f"Digits make up {feature_values['DegitRatioInURL']:.1%} of the URL, above the 20% review threshold. Excessive digits can occur in generated, disposable, or misleading URLs."
+        )
     if feature_values["SpacialCharRatioInURL"] > 0.08:
-        phishing_reasons.append("The URL contains many uncommon special characters.")
+        phishing_reasons.append(
+            f"Uncommon special characters make up {feature_values['SpacialCharRatioInURL']:.1%} of the URL, above the 8% review threshold. Dense punctuation can indicate encoded or evasive URL text."
+        )
     if feature_values["NoOfQMarkInURL"] > 0 or feature_values["NoOfEqualsInURL"] >= 2:
-        phishing_reasons.append("The URL contains query parameters often used in redirect or tracking links.")
+        phishing_reasons.append(
+            f"The URL contains {feature_values['NoOfQMarkInURL']} question mark and {feature_values['NoOfEqualsInURL']} equals sign(s). Query parameters are common in normal links, but multiple parameters can also carry redirects or tracking data."
+        )
     if not phishing_reasons:
-        legitimate_signals.append("No strong URL-level warning signal was detected.")
+        legitimate_signals.append(
+            "None of the configured URL-level warning thresholds were met. This lowers the screening concern, but it cannot establish that the destination is safe without inspecting the site through a trusted security process."
+        )
     return phishing_reasons, legitimate_signals
 
 
